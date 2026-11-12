@@ -24,9 +24,9 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_STYLE=Manual
 
-      - name: Export unsigned IPA
+      - name: Create exportOptions.plist
         run: |
-          cat > exportOptions.plist <<EOF
+          cat > exportOptions.plist <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -36,12 +36,15 @@ jobs:
     <key>signingStyle</key>
     <string>manual</string>
     <key>signingCertificate</key>
-    <string>-</string>
+    <string>none</string>
     <key>provisioningProfile</key>
-    <string>-</string>
+    <string>none</string>
 </dict>
 </plist>
-EOF
+PLIST
+
+      - name: Export unsigned IPA
+        run: |
           xcodebuild -exportArchive \
             -archivePath ./FloatVolDown.xcarchive \
             -exportOptionsPlist exportOptions.plist \
