@@ -1,0 +1,160 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		13B07FBC1A68108700A75B9A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FBB1A68108700A75B9A /* AppDelegate.swift */; };
+		13B07FBD1A68108700A75B9A /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB91A68108700A75B9A /* Info.plist */; };
+		23B123451A68108700A75B9A /* FloatDragBtn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B123441A68108700A75B9A /* FloatDragBtn.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		13B07F8E1A68108700A75B9A /* FloatVolDown.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FloatVolDown.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FBB1A68108700A75B9A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		13B07FB91A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		23B123441A68108700A75B9A /* FloatDragBtn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatDragBtn.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		13B07F8B1A68108700A75B9A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		13B07F8A1A68108700A75B9A = {
+			isa = PBXGroup;
+			children = (
+				13B07FBA1A68108700A75B9A /* FloatVolDown */,
+				13B07F8F1A68108700A75B9A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		13B07FBA1A68108700A75B9A /* FloatVolDown */ = {
+			isa = PBXGroup;
+			children = (
+				13B07FBB1A68108700A75B9A /* AppDelegate.swift */,
+				23B123441A68108700A75B9A /* FloatDragBtn.swift */,
+				13B07FB91A68108700A75B9A /* Info.plist */,
+			);
+			path = FloatVolDown;
+			sourceTree = "<group>";
+		};
+		13B07F8F1A68108700A75B9A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13B07F8E1A68108700A75B9A /* FloatVolDown.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		13B07F8C1A68108700A75B9A /* FloatVolDown */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13B07FA81A68108700A75B9A /* Build configuration list for PBXNativeTarget "FloatVolDown" */;
+			buildPhases = (
+				13B07F891A68108700A75B9A /* Sources */,
+				13B07F8B1A68108700A75B9A /* Frameworks */,
+				13B07F8C1A68108700A75B9A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FloatVolDown;
+			productName = FloatVolDown;
+			productReference = 13B07F8E1A68108700A75B9A /* FloatVolDown.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXResourcesBuildPhase section */
+		13B07F8C1A68108700A75B9A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13B07FBD1A68108700A75B9A /* Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		13B07F891A68108700A75B9A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13B07FBC1A68108700A75B9A /* AppDelegate.swift in Sources */,
+				23B123451A68108700A75B9A /* FloatDragBtn.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+/* End PBXTargetDependency section */
+
+/* Begin PBXBuildConfiguration section */
+		13B07FA61A68108700A75B9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = FloatVolDown/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.custom.floatvoldown;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		13B07FA71A68108700A75B9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = FloatVolDown/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.custom.floatvoldown;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		13B07FA81A68108700A75B9A /* Build configuration list for PBXNativeTarget "FloatVolDown" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				13B07FA61A68108700A75B9A /* Debug */,
+				13B07FA71A68108700A75B9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 13B07F8A1A68108700A75B9A /* Project object */;
+}
