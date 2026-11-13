@@ -1,114 +1,61 @@
 #import <UIKit/UIKit.h>
-#import <Foundation/Foundation.h>
+#import <substrate.h>
 
-static UIWindow *floatWindow;
-
-@interface FloatBtnView : UIView
-@end
-
-@implementation FloatBtnView {
-    UIImpactFeedbackGenerator *_feedback;
+static void sendVolumeDownEvent(){
+    Class GSEvent = objc_getClass("GSEvent");
+    if(!GSEvent) return;
+    SEL send = sel_getUid("sendHIDEvent:");
+    if([GSEvent respondsToSelector:send]){
+        uint32_t evt[] = {0x0C000102, 0, 0};
+        [GSEvent performSelector:send withObject:(__bridge id)evt];
+        usleep(30000);
+        evt[1] = 1;
+        [GSEvent performSelector:send withObject:(__bridge id)evt];
+    }
 }
 
-- (instancetype)initWithFrame:(CGRect)frame {
-    self = [super initWithFrame:frame];
-    if (self) {
+@interface FloatBall : UIView
+@end
+@implementation FloatBall
+- (instancetype)init{
+    self = [super initWithFrame:CGRectMake([UIScreen mainScreen].bounds.size.width - 55, 350, 40,40)];
+    if(self){
         self.backgroundColor = [UIColor systemBlueColor];
-        self.layer.cornerRadius = frame.size.width / 2.0;
-        self.clipsToBounds = YES;
-        self.layer.shadowColor = [UIColor blackColor].CGColor;
-        self.layer.shadowOpacity = 0.25;
-        self.layer.shadowRadius = 6.0;
-        self.layer.shadowOffset = CGSizeMake(0, 2);
+        self.layer.cornerRadius = 20;
+        self.userInteractionEnabled = YES;
 
-        _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
-        [_feedback prepare];
-
-        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self
-                                                                             action:@selector(handlePan:)];
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapAction)];
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(drag:)];
+        [self addGestureRecognizer:tap];
         [self addGestureRecognizer:pan];
     }
     return self;
 }
-
-- (void)handlePan:(UIPanGestureRecognizer *)gesture {
-    UIWindow *window = [self window];
-    if (!window) return;
-    CGSize screenSize = [UIScreen mainScreen].bounds.size;
-
-    CGPoint translation = [gesture translationInView:window];
-    CGPoint center = self.center;
-    center.x += translation.x;
-    center.y += translation.y;
-    self.center = center;
-    [gesture setTranslation:CGPointZero inView:window];
-
-    if (gesture.state == UIGestureRecognizerStateEnded || gesture.state == UIGestureRecognizerStateCancelled) {
-        CGFloat hideThreshold = 25;
-        if (center.x < hideThreshold || center.x > screenSize.width - hideThreshold) {
-            [UIView animateWithDuration:0.2 animations:^{
-                self.alpha = 0.3;
-            }];
-        } else {
-            [UIView animateWithDuration:0.2 animations:^{
-                self.alpha = 1.0;
-            }];
-        }
-    } else {
-        self.alpha = 1.0;
-    }
+- (void)tapAction {
+    sendVolumeDownEvent();
 }
-
-- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    [super touchesEnded:touches withEvent:event];
-
-    // 替换anyPassesTest，OC兼容写法，判断是否刚刚拖动过
-    BOOL isDragging = NO;
-    for (UIGestureRecognizer *g in self.gestureRecognizers) {
-        if (g.state == UIGestureRecognizerStateChanged) {
-            isDragging = YES;
-            break;
-        }
-    }
-    if (isDragging) {
-        return;
-    }
-
-    self.alpha = 1.0;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [_feedback impactOccurred];
-        [_feedback prepare];
-
-        NSURL *url = [NSURL URLWithString:@"xxt://launch/"];
-        if (!url) return;
-
-        if (@available(iOS 10.0, *)) {
-            [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-        } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            [[UIApplication sharedApplication] openURL:url];
-#pragma clang diagnostic pop
-        }
-    });
+- (void)drag:(UIPanGestureRecognizer *)g {
+    CGPoint offset = [g translationInView:self.superview];
+    self.center = CGPointMake(self.center.x + offset.x, self.center.y + offset.y);
+    [g setTranslation:CGPointZero inView:self.superview];
 }
-
 @end
 
-%ctor {
+static void (*origSBWorkspaceInit)(id self, SEL _cmd);
+void hookSBWorkspaceInit(id self, SEL _cmd){
+    origSBWorkspaceInit(self, _cmd);
     dispatch_async(dispatch_get_main_queue(), ^{
-        CGRect screenBounds = [UIScreen mainScreen].bounds;
-        CGFloat size = 54.0;
-
-        floatWindow = [[UIWindow alloc] initWithFrame:CGRectMake(screenBounds.size.width - size - 16.0,
-                                                                screenBounds.size.height / 2.0,
-                                                                size,
-                                                                size)];
-        floatWindow.windowLevel = 10000000;
-        floatWindow.hidden = NO;
-        floatWindow.clipsToBounds = NO;
-
-        FloatBtnView *btn = [[FloatBtnView alloc] initWithFrame:floatWindow.bounds];
-        [floatWindow addSubview:btn];
+        UIWindow *sbWin = [UIApplication sharedApplication].keyWindow;
+        if(sbWin){
+            FloatBall *ball = [[FloatBall alloc] init];
+            [sbWin addSubview:ball];
+        }
     });
+}
+
+%ctor{
+    Class cls = objc_getClass("SBMainWorkspace");
+    if(cls){
+        MSHookMessageEx(cls, @selector(init), (IMP)hookSBWorkspaceInit, (IMP *)&origSBWorkspaceInit);
+    }
 }
