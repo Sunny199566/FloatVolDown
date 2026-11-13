@@ -11,65 +11,49 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      # 编译Swift主App
       - name: Build Main Swift App
         run: |
           xcodebuild archive \
             -project FloatVolDown.xcodeproj \
             -scheme FloatVolDown \
             -sdk iphoneos \
-            -configuration Release \
             -archivePath ./FloatVolDown.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGN_STYLE=Manual
+            OTHER_LDFLAGS="-framework GraphicsServices"
 
-      # clang单独编译 hud_daemon
-      - name: Compile hud_daemon
-        run: |
-          clang -arch arm64 -arch arm64e \
-          -isysroot $(xcrun --sdk iphoneos --show-sdk-path) \
-          -framework UIKit -framework GraphicsServices \
-          hud_daemon.m -o hud_daemon
-          chmod +x hud_daemon
-          cp hud_daemon ./FloatVolDown.xcarchive/Products/Applications/FloatVolDown.app/
-
-      # 生成权限文件（换写法，避开yaml符号冲突）
       - name: Make entitlements.plist
         run: |
-          echo '<?xml version="1.0" encoding="UTF-8"?>' > entitlements.plist
-          echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> entitlements.plist
-          echo '<plist version="1.0">' >> entitlements.plist
-          echo '<dict>' >> entitlements.plist
-          echo '    <key>com.apple.private.accessibility.overlay</key>' >> entitlements.plist
-          echo '    <true/>' >> entitlements.plist
-          echo '    <key>com.apple.private.security.no-sandbox</key>' >> entitlements.plist
-          echo '    <true/>' >> entitlements.plist
-          echo '    <key>com.apple.coreanimation.allow-server-side-rendering</key>' >> entitlements.plist
-          echo '    <true/>' >> entitlements.plist
-          echo '</dict>' >> entitlements.plist
-          echo '</plist>' >> entitlements.plist
+          cat > entitlements.plist <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>com.apple.coregraphics.privateevent</key>
+  <true/>
+  <key>com.apple.private.graphics-services.event</key>
+  <true/>
+</dict>
+</plist>
+EOF
 
-      # 安装ldid，注入权限
       - name: Install ldid
         run: brew install ldid
 
       - name: Inject entitlements
         run: |
           ldid -Sentitlements.plist ./FloatVolDown.xcarchive/Products/Applications/FloatVolDown.app/FloatVolDown
-          ldid -Sentitlements.plist ./FloatVolDown.xcarchive/Products/Applications/FloatVolDown.app/hud_daemon
 
-      # 打包IPA
       - name: Package IPA
         run: |
-          mkdir -p Payload
-          cp -r ./FloatVolDown.xcarchive/Products/Applications/FloatVolDown.app ./Payload/
-          zip -q -r FloatVolDown.ipa Payload
-          mkdir -p out
-          mv FloatVolDown.ipa out/
+          mkdir Payload
+          cp -r ./FloatVolDown.xcarchive/Products/Applications/FloatVolDown.app Payload/
+          zip -r FloatVolDown.ipa Payload
+          rm -rf Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: FloatVolDown-GlobalVolDown
-          path: out/*.ipa
-          retention-days: 7
+          name: FloatVolDown-IPA
+          path: FloatVolDown.ipa
