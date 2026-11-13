@@ -43,9 +43,8 @@ static UIWindow *floatWindow;
     self.center = center;
     [gesture setTranslation:CGPointZero inView:window];
 
-    // 拖动结束时判断是否靠近左右边缘，自动半隐藏
     if (gesture.state == UIGestureRecognizerStateEnded || gesture.state == UIGestureRecognizerStateCancelled) {
-        CGFloat hideThreshold = 25; // 距离左右边缘25pt就触发半隐
+        CGFloat hideThreshold = 25;
         if (center.x < hideThreshold || center.x > screenSize.width - hideThreshold) {
             [UIView animateWithDuration:0.2 animations:^{
                 self.alpha = 0.3;
@@ -56,21 +55,25 @@ static UIWindow *floatWindow;
             }];
         }
     } else {
-        // 正在拖动的时候，保持完全不透明，方便你看位置
         self.alpha = 1.0;
     }
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    [super touchesEnded:touchesEnded:touches withEvent:event];
+    [super touchesEnded:touches withEvent:event];
 
-    if ([[self gestureRecognizers] anyPassesTest:^BOOL(UIGestureRecognizer *g) {
-        return g.state == UIGestureRecognizerStateChanged;
-    }]) {
+    // 替换anyPassesTest，OC兼容写法，判断是否刚刚拖动过
+    BOOL isDragging = NO;
+    for (UIGestureRecognizer *g in self.gestureRecognizers) {
+        if (g.state == UIGestureRecognizerStateChanged) {
+            isDragging = YES;
+            break;
+        }
+    }
+    if (isDragging) {
         return;
     }
 
-    // 点一下的时候，先恢复不透明，再震动、执行链接
     self.alpha = 1.0;
     dispatch_async(dispatch_get_main_queue(), ^{
         [_feedback impactOccurred];
