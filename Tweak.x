@@ -3,7 +3,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreFoundation/CoreFoundation.h>
 
-static UIWindow *floatWindow = nil;
+static UIView *floatBall = nil;
 static NSString *const kNotificationName = @"com.user.floatball.runscript";
 
 static void playTapHaptic() {
@@ -51,35 +51,22 @@ static void sendTriggerNotification(void) {
 }
 @end
 
-static void (*origSBMainWorkspaceInit)(id self, SEL _cmd);
-void hookSBMainWorkspaceInit(id self, SEL _cmd){
-    origSBMainWorkspaceInit(self, _cmd);
+static void (*origSBHomeScreenOverlayViewDidMoveToWindow)(id self, SEL _cmd);
+void hookSBHomeScreenOverlayViewDidMoveToWindow(id self, SEL _cmd) {
+    origSBHomeScreenOverlayViewDidMoveToWindow(self, _cmd);
     dispatch_async(dispatch_get_main_queue(), ^{
-        if(floatWindow) return;
-
-        UIWindowScene *activeScene = nil;
-        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
-                activeScene = scene;
-                break;
-            }
+        if(!floatBall){
+            floatBall = [[FloatBall alloc] init];
         }
-        if (!activeScene) return;
-
-        floatWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
-        floatWindow.frame = [UIScreen mainScreen].bounds;
-        floatWindow.windowLevel = UIWindowLevelAlert + 9999;
-        floatWindow.hidden = NO;
-
-        FloatBall *ball = [[FloatBall alloc] init];
-        floatWindow.rootViewController = [UIViewController new];
-        [floatWindow.rootViewController.view addSubview:ball];
+        if(floatBall.superview != self){
+            [self addSubview:floatBall];
+        }
     });
 }
 
 %ctor{
-    Class cls = objc_getClass("SBMainWorkspace");
+    Class cls = objc_getClass("SBHomeScreenOverlayView");
     if(cls){
-        MSHookMessageEx(cls, @selector(init), (IMP)hookSBMainWorkspaceInit, (IMP *)&origSBMainWorkspaceInit);
+        MSHookMessageEx(cls, @selector(didMoveToWindow), (IMP)hookSBHomeScreenOverlayViewDidMoveToWindow, (IMP *)&origSBHomeScreenOverlayViewDidMoveToWindow);
     }
 }
