@@ -3,16 +3,12 @@ name: Build Tweak
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-15
     steps:
       - name: Set up job
-        run: echo "Start build"
-
-      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Install ldid via homebrew
@@ -20,26 +16,17 @@ jobs:
 
       - name: Clone full Theos (with submodules)
         run: |
-          git clone --recursive https://github.com/theos/theos.git $GITHUB_WORKSPACE/theos
-        env:
-          THEOS: ${{ github.workspace }}/theos
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
 
       - name: Env
-        run: echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
-
-      - name: Install latest SDK via theos
-        run: $THEOS/bin/install-sdk latest
+        run: echo "PATH=$THEOS/bin:$PATH" >> $GITHUB_ENV
 
       - name: Build
-        run: make clean package FINALPACKAGE=1
+        run: make package
 
       - name: Upload deb
         uses: actions/upload-artifact@v4
         with:
           name: deb-file
           path: packages/*.deb
-
-      - name: Post Checkout source
-        run: echo "done"
-      - name: Complete job
-        run: echo "Build finished"
