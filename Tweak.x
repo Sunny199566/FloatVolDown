@@ -2,7 +2,8 @@
 #import <substrate.h>
 #import <AudioToolbox/AudioToolbox.h>
 
-static NSString * const targetScheme = @"xxt://run?file=rec_20261113153215.lua";
+// rootless下脚本完整绝对路径，直接指定这个lua脚本
+static NSString * const targetScheme = @"xxt://launch/?path=/var/mobile/Media/1ferver/lua/scripts/rec_20261113153215.lua";
 static UIWindow *floatWindow = nil;
 
 static void playTapHaptic() {
@@ -31,9 +32,11 @@ static void playTapHaptic() {
 }
 - (void)tapAction {
     playTapHaptic();
-    NSURL *url = [NSURL URLWithString:targetScheme];
+    NSURL *url = [NSURL URLWithString:[targetScheme stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
     if([[UIApplication sharedApplication] canOpenURL:url]){
-        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+        });
     }
 }
 - (void)drag:(UIPanGestureRecognizer *)g {
@@ -49,7 +52,6 @@ void hookSBMainWorkspaceInit(id self, SEL _cmd){
     dispatch_async(dispatch_get_main_queue(), ^{
         if(floatWindow) return;
 
-        // 找到前台活跃的Scene，iOS17必须绑定Scene才能正常显示window
         UIWindowScene *activeScene = nil;
         for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
@@ -59,7 +61,6 @@ void hookSBMainWorkspaceInit(id self, SEL _cmd){
         }
         if (!activeScene) return;
 
-        // 用scene初始化window，这是关键修复点
         floatWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
         floatWindow.frame = [UIScreen mainScreen].bounds;
         floatWindow.windowLevel = UIWindowLevelAlert + 9999;
