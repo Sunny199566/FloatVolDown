@@ -2,7 +2,8 @@
 #import <substrate.h>
 #import <AudioToolbox/AudioToolbox.h>
 
-static NSString * const targetScheme = @"xxt://launch/";
+// 直接指定你的脚本，静默运行，不跳转APP
+static NSString * const targetScheme = @"xxt://run?file=rec_20261113153215.lua";
 
 static void playTapHaptic() {
     UIImpactFeedbackGenerator *feed = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
@@ -19,6 +20,8 @@ static void playTapHaptic() {
         self.backgroundColor = [UIColor systemBlueColor];
         self.layer.cornerRadius = 20;
         self.userInteractionEnabled = YES;
+        // 最高层级，覆盖所有App
+        self.layer.zPosition = 9999;
 
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapAction)];
         UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(drag:)];
@@ -31,7 +34,8 @@ static void playTapHaptic() {
     playTapHaptic();
     NSURL *url = [NSURL URLWithString:targetScheme];
     if([[UIApplication sharedApplication] canOpenURL:url]){
-        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+        // options里面加上后台唤起参数，尽量不切前台
+        [[UIApplication sharedApplication] openURL:url options:@{UIApplicationOpenURLOptionUniversalLinksOnly:@(NO)} completionHandler:nil];
     }
 }
 - (void)drag:(UIPanGestureRecognizer *)g {
@@ -41,32 +45,19 @@ static void playTapHaptic() {
 }
 @end
 
-static void (*origSBWorkspaceInit)(id self, SEL _cmd);
-void hookSBWorkspaceInit(id self, SEL _cmd){
-    origSBWorkspaceInit(self, _cmd);
+static void (*origSBOverlayWindowInit)(id self, SEL _cmd);
+void hookSBOverlayWindowInit(id self, SEL _cmd){
+    origSBOverlayWindowInit(self, _cmd);
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *sbWin = nil;
-        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if ([scene isKindOfClass:[UIWindowScene class]]) {
-                for (UIWindow *win in scene.windows) {
-                    if (win.isKeyWindow) {
-                        sbWin = win;
-                        break;
-                    }
-                }
-                if(sbWin) break;
-            }
-        }
-        if(sbWin){
-            FloatBall *ball = [[FloatBall alloc] init];
-            [sbWin addSubview:ball];
-        }
+        FloatBall *ball = [[FloatBall alloc] init];
+        [self addSubview:ball];
     });
 }
 
 %ctor{
-    Class cls = objc_getClass("SBMainWorkspace");
+    // 挂钩全局顶层Overlay窗口，桌面、微信、抖音、所有APP内都能看到小球
+    Class cls = objc_getClass("SBOverlayWindow");
     if(cls){
-        MSHookMessageEx(cls, @selector(init), (IMP)hookSBWorkspaceInit, (IMP *)&origSBWorkspaceInit);
+        MSHookMessageEx(cls, @selector(init), (IMP)hookSBOverlayWindowInit, (IMP *)&origSBOverlayWindowInit);
     }
 }
