@@ -21,17 +21,11 @@ jobs:
         env:
           THEOS: ${{ github.workspace }}/theos
 
-      - name: Checkout sdks
-        uses: theos/sdks@master
-
-      - name: Install ldid
-        run: brew install ldid
-
       - name: Env
         run: echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
 
-      - name: Build
-        run: make clean package FINALPACKAGE=1
+      - name: Build (skip signature, no sdks action)
+        run: make clean package FINALPACKAGE=1 NO_CODESIGN=1
 
       - name: Upload deb
         uses: actions/upload-artifact@v4
@@ -39,10 +33,6 @@ jobs:
           name: deb-file
           path: packages/*.deb
 
-      - name: Post Checkout sdks
-        run: echo "done"
-      - name: Post Checkout Theos
-        run: echo "done"
       - name: Post Checkout source
         run: echo "done"
       - name: Complete job
