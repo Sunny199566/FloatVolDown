@@ -24,7 +24,10 @@ jobs:
       - name: Env
         run: echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
 
-      - name: Build (skip signature, no sdks action)
+      - name: Install latest SDK via theos
+        run: $THEOS/bin/install-sdk latest
+
+      - name: Build (skip signature)
         run: make clean package FINALPACKAGE=1 NO_CODESIGN=1
 
       - name: Upload deb
