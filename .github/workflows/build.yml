@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: macos-15
     steps:
-      - name: Checkout 你的项目源码
+      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Checkout Theos
@@ -19,22 +19,21 @@ jobs:
           submodules: recursive
           path: theos
 
-      - name: Checkout SDKs
+      - name: Checkout sdks
         uses: actions/checkout@v4
         with:
           repository: theos/sdks
           path: theos/sdks
 
-      - name: 配置环境变量
+      - name: Env
         run: |
           echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
           echo "THEOS_PACKAGE_SCHEME=rootless" >> $GITHUB_ENV
 
-      - name: 编译 rootless deb
-        run: |
-          make clean package FINALPACKAGE=1
+      - name: Build
+        run: make clean package FINALPACKAGE=1
 
-      - name: 上传deb
+      - name: Upload deb
         uses: actions/upload-artifact@v4
         with:
           name: FloatVolDown-deb
