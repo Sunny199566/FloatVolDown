@@ -1,3 +1,3 @@
 #import <UIKit/UIKit.h>
-@interface VolView : UIWindow
+@interface VolView : UIView
 @end
