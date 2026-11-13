@@ -48,10 +48,23 @@ void hookSBMainWorkspaceInit(id self, SEL _cmd){
     origSBMainWorkspaceInit(self, _cmd);
     dispatch_async(dispatch_get_main_queue(), ^{
         if(floatWindow) return;
-        floatWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        // 最高alert层级，全局置顶
+
+        // 找到前台活跃的Scene，iOS17必须绑定Scene才能正常显示window
+        UIWindowScene *activeScene = nil;
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
+                activeScene = scene;
+                break;
+            }
+        }
+        if (!activeScene) return;
+
+        // 用scene初始化window，这是关键修复点
+        floatWindow = [[UIWindow alloc] initWithWindowScene:activeScene];
+        floatWindow.frame = [UIScreen mainScreen].bounds;
         floatWindow.windowLevel = UIWindowLevelAlert + 9999;
         floatWindow.hidden = NO;
+
         FloatBall *ball = [[FloatBall alloc] init];
         floatWindow.rootViewController = [UIViewController new];
         [floatWindow.rootViewController.view addSubview:ball];
