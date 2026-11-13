@@ -1,10 +1,5 @@
 #import "VolView.h"
-#import <UIKit/UIKit.h>
-#import <dlfcn.h>
-
-typedef void (*GSEventPostHIDEvent_t)(int keyCode, int down);
-static GSEventPostHIDEvent_t GSEventPostHIDEvent = NULL;
-static const int kKeyVolDown = 0x69;
+#import <AVFoundation/AVFoundation.h>
 
 @implementation VolView
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -14,12 +9,6 @@ static const int kKeyVolDown = 0x69;
         self.layer.cornerRadius = 30;
         self.clipsToBounds = YES;
         self.userInteractionEnabled = YES;
-        
-        // 运行时打开私有框架，拿到函数地址
-        void *gsHandle = dlopen("/System/Library/PrivateFrameworks/GraphicsServices.framework/GraphicsServices", RTLD_LAZY);
-        if (gsHandle) {
-            GSEventPostHIDEvent = dlsym(gsHandle, "GSEventPostHIDEvent");
-        }
         
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onTap)];
         [self addGestureRecognizer:tap];
@@ -31,10 +20,12 @@ static const int kKeyVolDown = 0x69;
 }
 
 - (void)onTap {
-    if (!GSEventPostHIDEvent) return;
-    GSEventPostHIDEvent(kKeyVolDown, 1);
-    usleep(80000);
-    GSEventPostHIDEvent(kKeyVolDown, 0);
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    [session setActive:YES error:nil];
+    // 音量减少 0.1（系统音量区间0~1）
+    float vol = session.outputVolume - 0.1f;
+    if (vol < 0) vol = 0;
+    [session setOutputVolume:vol error:nil];
 }
 
 - (void)onDrag:(UIPanGestureRecognizer *)g {
