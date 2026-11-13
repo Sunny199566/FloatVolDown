@@ -6,16 +6,29 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Theos
+      - name: Install ldid
+        run: brew install ldid
+      - name: Compile source & link
         run: |
-          git clone --recursive https://github.com/theos/theos.git ~/theos
-          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-      - name: Build App
-        run: |
-          export THEOS=$HOME/theos
-          make package THEOS_DEVICE_IP=127.0.0.1
+          clang -arch arm64 -arch arm64e \
+          -isysroot $(xcrun --sdk iphoneos --show-sdk-path) \
+          -fobjc-arc \
+          -o VolDownFloat \
+          main.m VolView.m \
+          -framework UIKit -framework CoreGraphics -framework GraphicsServices
+          
+          # 建立IPA目录结构
+          mkdir -p Payload/VolDownFloat.app
+          mv VolDownFloat Payload/VolDownFloat.app/
+          cp Info.plist Payload/VolDownFloat.app/
+          
+          # ldid签名（巨魔无签名IPA）
+          ldid -Sentitlements.plist Payload/VolDownFloat.app/VolDownFloat
+          
+          # 打包ipa
+          zip -r VolDownFloat.ipa Payload
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: VolDownFloat-IPA
-          path: packages/*.ipa
+          path: VolDownFloat.ipa
