@@ -16,6 +16,7 @@ jobs:
         run: |
           git clone --recursive https://github.com/theos/theos.git $GITHUB_WORKSPACE/theos
           echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
+          $GITHUB_WORKSPACE/theos/bin/fetch-sdk 16.0
 
       - name: Install dependencies
         run: |
