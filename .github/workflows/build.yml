@@ -1,23 +1,20 @@
 name: Build Tweak
-
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Theos
-        uses: theos/setup-theos@v1
+        uses: Randomblock1/theos-action@v1
         with:
-          sdk: latest
-
-      - name: Build & package
-        run: make package
-
+          sdk: iphoneos17.0
+      - name: Build
+        run: make package THEOS_PACKAGE_SCHEME=rootless
       - name: Upload deb
         uses: actions/upload-artifact@v4
         with:
