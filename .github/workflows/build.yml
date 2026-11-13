@@ -15,17 +15,14 @@ jobs:
           -fobjc-arc \
           -o VolDownFloat \
           main.m VolView.m \
-          -framework UIKit -framework CoreGraphics -framework GraphicsServices
+          -framework UIKit -framework CoreGraphics
           
-          # 建立IPA目录结构
           mkdir -p Payload/VolDownFloat.app
           mv VolDownFloat Payload/VolDownFloat.app/
           cp Info.plist Payload/VolDownFloat.app/
           
-          # ldid签名（巨魔无签名IPA）
           ldid -Sentitlements.plist Payload/VolDownFloat.app/VolDownFloat
           
-          # 打包ipa
           zip -r VolDownFloat.ipa Payload
       - name: Upload IPA
         uses: actions/upload-artifact@v4
