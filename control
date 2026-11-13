@@ -1,0 +1,7 @@
+Package: com.float.voldown
+Name: FloatVolDown
+Version: 1.0
+Architecture: iphoneos-arm64
+Description: 悬浮球，单击震动并启动XXTouch选中脚本；长按隐藏；设置面板开关悬浮球
+Maintainer: me
+Depends: mobilesubstrate, preferenceloader
