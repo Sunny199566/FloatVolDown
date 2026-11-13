@@ -2,14 +2,36 @@
 #import <substrate.h>
 #import <AudioToolbox/AudioToolbox.h>
 
-// rootless下脚本完整绝对路径，直接指定这个lua脚本
-static NSString * const targetScheme = @"xxt://launch/?path=/var/mobile/Media/1ferver/lua/scripts/rec_20261113153215.lua";
 static UIWindow *floatWindow = nil;
+// XXTouch本地http端口
+static const uint16_t xxtPort = 46952;
+static NSString *scriptAbsolutePath = @"/var/mobile/Media/1ferver/lua/scripts/rec_20261113153215.lua";
 
 static void playTapHaptic() {
     UIImpactFeedbackGenerator *feed = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
     [feed prepare];
     [feed impactOccurred];
+}
+
+static void runScriptBackground() {
+    NSString *urlStr = [NSString stringWithFormat:@"http://localhost:%u/api/run", xxtPort];
+    NSURL *url = [NSURL URLWithString:urlStr];
+    NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:url];
+    req.HTTPMethod = @"POST";
+    req.timeoutInterval = 2.0;
+    [req setValue:@"application/json" forHTTPHeaderField:@"Content‑Type"];
+
+    NSDictionary *bodyDict = @{@"path": scriptAbsolutePath};
+    NSError *err;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:bodyDict options:0 error:&err];
+    if(!jsonData) return;
+    req.HTTPBody = jsonData;
+
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *task = [session dataTaskWithRequest:req completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        // 后台回调，不需要处理返回结果
+    }];
+    [task resume];
 }
 
 @interface FloatBall : UIView
@@ -32,12 +54,7 @@ static void playTapHaptic() {
 }
 - (void)tapAction {
     playTapHaptic();
-    NSURL *url = [NSURL URLWithString:[targetScheme stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-    if([[UIApplication sharedApplication] canOpenURL:url]){
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-        });
-    }
+    runScriptBackground();
 }
 - (void)drag:(UIPanGestureRecognizer *)g {
     CGPoint offset = [g translationInView:self.superview];
