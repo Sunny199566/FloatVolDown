@@ -15,7 +15,7 @@ jobs:
           -fobjc-arc \
           -o VolDownFloat \
           main.m VolView.m \
-          -framework UIKit -framework CoreGraphics
+          -framework UIKit -framework CoreGraphics -ldl
           
           mkdir -p Payload/VolDownFloat.app
           mv VolDownFloat Payload/VolDownFloat.app/
