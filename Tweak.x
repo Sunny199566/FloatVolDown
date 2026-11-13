@@ -1,17 +1,15 @@
 #import <UIKit/UIKit.h>
 #import <substrate.h>
+#import <AudioToolbox/AudioToolbox.h>
 
-static void sendVolumeDownEvent(){
-    Class GSEvent = objc_getClass("GSEvent");
-    if(!GSEvent) return;
-    SEL send = sel_getUid("sendHIDEvent:");
-    if([GSEvent respondsToSelector:send]){
-        uint32_t evt[] = {0x0C000102, 0, 0};
-        [GSEvent performSelector:send withObject:(__bridge id)evt];
-        usleep(30000);
-        evt[1] = 1;
-        [GSEvent performSelector:send withObject:(__bridge id)evt];
-    }
+// 这里填你脚本APP的 URL Scheme！！！
+static NSString * const targetScheme = @"yourapp://";
+
+static void playTapHaptic() {
+    // 系统轻触感震动
+    UIImpactFeedbackGenerator *feed = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+    [feed prepare];
+    [feed impactOccurred];
 }
 
 @interface FloatBall : UIView
@@ -32,7 +30,11 @@ static void sendVolumeDownEvent(){
     return self;
 }
 - (void)tapAction {
-    sendVolumeDownEvent();
+    playTapHaptic();
+    NSURL *url = [NSURL URLWithString:targetScheme];
+    if([[UIApplication sharedApplication] canOpenURL:url]){
+        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+    }
 }
 - (void)drag:(UIPanGestureRecognizer *)g {
     CGPoint offset = [g translationInView:self.superview];
@@ -45,7 +47,13 @@ static void (*origSBWorkspaceInit)(id self, SEL _cmd);
 void hookSBWorkspaceInit(id self, SEL _cmd){
     origSBWorkspaceInit(self, _cmd);
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *sbWin = [UIApplication sharedApplication].keyWindow;
+        UIWindow *sbWin = nil;
+        for (UIWindow *win in [UIApplication sharedApplication].windows) {
+            if(win.isKeyWindow){
+                sbWin = win;
+                break;
+            }
+        }
         if(sbWin){
             FloatBall *ball = [[FloatBall alloc] init];
             [sbWin addSubview:ball];
