@@ -1,60 +1,50 @@
 #import <UIKit/UIKit.h>
-#import <AudioToolbox/AudioToolbox.h>
+#import <GraphicsServices/GSEvent.h>
 
-static UIWindow *overlayWindow;
-static float volumeStep = 0.1f;
+static UIWindow *overlayWin;
 
-void setupOverlayWindow() {
+// 模拟实体音量减按键按下（按下+松开一套完整事件）
+void sendVolumeDownKeyEvent(void) {
+    GSEventRef pressEvent = GSEventCreateVolumeButtonEvent(kGSEventVolumeDownButton, YES);
+    GSEventPost(pressEvent);
+    CFRelease(pressEvent);
+    
+    usleep(80000);
+    
+    GSEventRef releaseEvent = GSEventCreateVolumeButtonEvent(kGSEventVolumeDownButton, NO);
+    GSEventPost(releaseEvent);
+    CFRelease(releaseEvent);
+}
+
+void setupFloatBtn(void) {
     @autoreleasepool {
-        overlayWindow = [[UIWindow alloc] initWithFrame:CGRectMake(50, 300, 80, 160)];
-        overlayWindow.windowLevel = UIWindowLevelAlert + 9999;
-        overlayWindow.backgroundColor = [UIColor clearColor];
-        overlayWindow.hidden = NO;
-
-        UIButton *volDownBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        volDownBtn.frame = CGRectMake(10,10,60,60);
-        [volDownBtn setTitle:@"-" forState:UIControlStateNormal];
-        volDownBtn.titleLabel.font = [UIFont boldSystemFontOfSize:32];
-        [volDownBtn addTarget:nil action:@selector(volDownTap) forControlEvents:UIControlEventTouchUpInside];
-
-        UIButton *volUpBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        volUpBtn.frame = CGRectMake(10,80,60,60);
-        [volUpBtn setTitle:@"+" forState:UIControlStateNormal];
-        volUpBtn.titleLabel.font = [UIFont boldSystemFontOfSize:32];
-        [volUpBtn addTarget:nil action:@selector(volUpTap) forControlEvents:UIControlEventTouchUpInside];
-
-        overlayWindow.rootViewController = [UIViewController new];
-        [overlayWindow.rootViewController.view addSubview:volDownBtn];
-        [overlayWindow.rootViewController.view addSubview:volUpBtn];
-        overlayWindow.userInteractionEnabled = YES;
+        overlayWin = [[UIWindow alloc] initWithFrame:CGRectMake(60, 320, 70, 70)];
+        overlayWin.windowLevel = UIWindowLevelAlert + 9999;
+        overlayWin.backgroundColor = UIColor.clearColor;
+        overlayWin.hidden = NO;
+        
+        UIButton *btn = [UIButton buttonWithType:UIButtonTypeSystem];
+        btn.frame = CGRectMake(5,5,60,60);
+        btn.backgroundColor = [UIColor colorWithWhite:0 alpha:0.65];
+        btn.layer.cornerRadius = 30;
+        [btn setTitle:@"-" forState:UIControlStateNormal];
+        btn.titleLabel.font = [UIFont boldSystemFontOfSize:28];
+        [btn setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+        [btn addTarget:nil action:@selector(onTap) forControlEvents:UIControlEventTouchUpInside];
+        
+        overlayWin.rootViewController = [UIViewController new];
+        [overlayWin.rootViewController.view addSubview:btn];
+        overlayWin.userInteractionEnabled = YES;
     }
 }
 
-void volDownTap() {
-    float v;
-    UInt32 size = sizeof(v);
-    AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareOutputVolume, &size, &v);
-    v -= volumeStep;
-    if(v < 0) v = 0;
-    AudioSessionSetProperty(kAudioSessionProperty_CurrentHardwareOutputVolume, sizeof(v), &v);
-}
-
-void volUpTap() {
-    float v;
-    UInt32 size = sizeof(v);
-    AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareOutputVolume, &size, &v);
-    v += volumeStep;
-    if(v > 1) v = 1;
-    AudioSessionSetProperty(kAudioSessionProperty_CurrentHardwareOutputVolume, sizeof(v), &v);
+void onTap() {
+    sendVolumeDownKeyEvent();
 }
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        if(argc >= 2) {
-            volumeStep = atof(argv[1]);
-        }
-        AudioSessionInitialize(NULL, NULL, NULL, NULL);
-        setupOverlayWindow();
+        setupFloatBtn();
         [[NSRunLoop mainRunLoop] run];
     }
     return 0;
