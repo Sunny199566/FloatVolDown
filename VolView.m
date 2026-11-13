@@ -1,10 +1,8 @@
 #import "VolView.h"
-#import <GraphicsServices/GraphicsServices.h>
+#import <UIKit/UIKit.h>
 
-#define GSEventSendEvent  CFNotificationCenterPostNotification
+// 手动声明私有函数，不用导入头文件
 extern void GSEventPostHIDEvent(int keyCode, int down);
-
-// 音量减 keycode: 0x69
 static const int kKeyVolDown = 0x69;
 
 @implementation VolView
@@ -26,7 +24,7 @@ static const int kKeyVolDown = 0x69;
 }
 
 - (void)onTap {
-    // 模拟实体按键：按下 → 松开，一次完整按键
+    // 完整模拟按键：按下+松开
     GSEventPostHIDEvent(kKeyVolDown, 1);
     usleep(80000);
     GSEventPostHIDEvent(kKeyVolDown, 0);
