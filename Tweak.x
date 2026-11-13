@@ -1,11 +1,9 @@
 #import <UIKit/UIKit.h>
 #import <substrate.h>
 #import <AudioToolbox/AudioToolbox.h>
+#import <dlfcn.h>
 
 static UIWindow *floatWindow = nil;
-
-// 函数声明
-extern void CGPostVolumeButtonEvent(int button, int state);
 
 static void playTapHaptic() {
     UIImpactFeedbackGenerator *feed = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
@@ -13,12 +11,19 @@ static void playTapHaptic() {
     [feed impactOccurred];
 }
 
-// 模拟一次音量+按键按下松开
+typedef void (*CGPostVolumeButtonEvent_t)(int btn, int state);
 static void simulateVolumeUpKey(void) {
-    // 1 = 音量加； 0按下，1松开
-    CGPostVolumeButtonEvent(1, 0);
+    void *handle = dlopen("/System/Library/PrivateFrameworks/CoreGraphics.framework/CoreGraphics", RTLD_LAZY);
+    if (!handle) return;
+    CGPostVolumeButtonEvent_t func = (CGPostVolumeButtonEvent_t)dlsym(handle, "CGPostVolumeButtonEvent");
+    if (!func) {
+        dlclose(handle);
+        return;
+    }
+    func(1, 0);
     usleep(80000);
-    CGPostVolumeButtonEvent(1, 1);
+    func(1, 1);
+    dlclose(handle);
 }
 
 @interface FloatBall : UIView
