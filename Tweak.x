@@ -6,7 +6,9 @@ static UIWindow *floatWindow;
 @interface FloatBtnView : UIView
 @end
 
-@implementation FloatBtnView
+@implementation FloatBtnView {
+    UIImpactFeedbackGenerator *_feedback;
+}
 
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
@@ -19,6 +21,9 @@ static UIWindow *floatWindow;
         self.layer.shadowRadius = 6.0;
         self.layer.shadowOffset = CGSizeMake(0, 2);
 
+        _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+        [_feedback prepare];
+
         UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self
                                                                              action:@selector(handlePan:)];
         [self addGestureRecognizer:pan];
@@ -29,22 +34,31 @@ static UIWindow *floatWindow;
 - (void)handlePan:(UIPanGestureRecognizer *)gesture {
     UIWindow *window = [self window];
     if (!window) return;
+    CGSize screenSize = [UIScreen mainScreen].bounds.size;
 
     CGPoint translation = [gesture translationInView:window];
     CGPoint center = self.center;
     center.x += translation.x;
     center.y += translation.y;
-
-    CGFloat radius = self.bounds.size.width / 2.0;
-    CGRect bounds = window.bounds;
-
-    if (center.x < radius) center.x = radius;
-    if (center.y < radius) center.y = radius;
-    if (center.x > bounds.size.width  - radius) center.x = bounds.size.width  - radius;
-    if (center.y > bounds.size.height - radius) center.y = bounds.size.height - radius;
-
     self.center = center;
     [gesture setTranslation:CGPointZero inView:window];
+
+    // 拖动结束时判断是否靠近左右边缘，自动半隐藏
+    if (gesture.state == UIGestureRecognizerStateEnded || gesture.state == UIGestureRecognizerStateCancelled) {
+        CGFloat hideThreshold = 25; // 距离左右边缘25pt就触发半隐
+        if (center.x < hideThreshold || center.x > screenSize.width - hideThreshold) {
+            [UIView animateWithDuration:0.2 animations:^{
+                self.alpha = 0.3;
+            }];
+        } else {
+            [UIView animateWithDuration:0.2 animations:^{
+                self.alpha = 1.0;
+            }];
+        }
+    } else {
+        // 正在拖动的时候，保持完全不透明，方便你看位置
+        self.alpha = 1.0;
+    }
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
@@ -56,7 +70,12 @@ static UIWindow *floatWindow;
         return;
     }
 
+    // 点一下的时候，先恢复不透明，再震动、执行链接
+    self.alpha = 1.0;
     dispatch_async(dispatch_get_main_queue(), ^{
+        [_feedback impactOccurred];
+        [_feedback prepare];
+
         NSURL *url = [NSURL URLWithString:@"xxt://launch/"];
         if (!url) return;
 
