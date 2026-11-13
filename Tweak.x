@@ -2,8 +2,8 @@
 #import <substrate.h>
 #import <AudioToolbox/AudioToolbox.h>
 
-// 直接指定你的脚本，静默运行，不跳转APP
 static NSString * const targetScheme = @"xxt://run?file=rec_20261113153215.lua";
+static UIWindow *floatWindow = nil;
 
 static void playTapHaptic() {
     UIImpactFeedbackGenerator *feed = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
@@ -20,8 +20,7 @@ static void playTapHaptic() {
         self.backgroundColor = [UIColor systemBlueColor];
         self.layer.cornerRadius = 20;
         self.userInteractionEnabled = YES;
-        // 最高层级，覆盖所有App
-        self.layer.zPosition = 9999;
+        self.layer.zPosition = 99999;
 
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapAction)];
         UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(drag:)];
@@ -34,8 +33,7 @@ static void playTapHaptic() {
     playTapHaptic();
     NSURL *url = [NSURL URLWithString:targetScheme];
     if([[UIApplication sharedApplication] canOpenURL:url]){
-        // options里面加上后台唤起参数，尽量不切前台
-        [[UIApplication sharedApplication] openURL:url options:@{UIApplicationOpenURLOptionUniversalLinksOnly:@(NO)} completionHandler:nil];
+        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
     }
 }
 - (void)drag:(UIPanGestureRecognizer *)g {
@@ -45,19 +43,24 @@ static void playTapHaptic() {
 }
 @end
 
-static void (*origSBOverlayWindowInit)(id self, SEL _cmd);
-void hookSBOverlayWindowInit(id self, SEL _cmd){
-    origSBOverlayWindowInit(self, _cmd);
+static void (*origSBMainWorkspaceInit)(id self, SEL _cmd);
+void hookSBMainWorkspaceInit(id self, SEL _cmd){
+    origSBMainWorkspaceInit(self, _cmd);
     dispatch_async(dispatch_get_main_queue(), ^{
+        if(floatWindow) return;
+        floatWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        // 最高alert层级，全局置顶
+        floatWindow.windowLevel = UIWindowLevelAlert + 9999;
+        floatWindow.hidden = NO;
         FloatBall *ball = [[FloatBall alloc] init];
-        [self addSubview:ball];
+        floatWindow.rootViewController = [UIViewController new];
+        [floatWindow.rootViewController.view addSubview:ball];
     });
 }
 
 %ctor{
-    // 挂钩全局顶层Overlay窗口，桌面、微信、抖音、所有APP内都能看到小球
-    Class cls = objc_getClass("SBOverlayWindow");
+    Class cls = objc_getClass("SBMainWorkspace");
     if(cls){
-        MSHookMessageEx(cls, @selector(init), (IMP)hookSBOverlayWindowInit, (IMP *)&origSBOverlayWindowInit);
+        MSHookMessageEx(cls, @selector(init), (IMP)hookSBMainWorkspaceInit, (IMP *)&origSBMainWorkspaceInit);
     }
 }
