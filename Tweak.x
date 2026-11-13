@@ -1,11 +1,9 @@
 #import <UIKit/UIKit.h>
 #import <substrate.h>
 #import <AudioToolbox/AudioToolbox.h>
+#import <GraphicsServices/GraphicsServices.h>
 
 static UIWindow *floatWindow = nil;
-// XXTouch本地http端口
-static const uint16_t xxtPort = 46952;
-static NSString *scriptAbsolutePath = @"/var/mobile/Media/1ferver/lua/scripts/rec_20261113153215.lua";
 
 static void playTapHaptic() {
     UIImpactFeedbackGenerator *feed = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
@@ -13,25 +11,20 @@ static void playTapHaptic() {
     [feed impactOccurred];
 }
 
-static void runScriptBackground() {
-    NSString *urlStr = [NSString stringWithFormat:@"http://localhost:%u/api/run", xxtPort];
-    NSURL *url = [NSURL URLWithString:urlStr];
-    NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:url];
-    req.HTTPMethod = @"POST";
-    req.timeoutInterval = 2.0;
-    [req setValue:@"application/json" forHTTPHeaderField:@"Content‑Type"];
+// 模拟按下音量增加硬件按键
+static void simulateVolumeUpKey(void) {
+    GSEventRecord ev;
+    memset(&ev, 0, sizeof(ev));
 
-    NSDictionary *bodyDict = @{@"path": scriptAbsolutePath};
-    NSError *err;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:bodyDict options:0 error:&err];
-    if(!jsonData) return;
-    req.HTTPBody = jsonData;
+    ev.type = kGSEventVolumeButtonDown;
+    ev.info.volumeButton.volumeButtonType = kGSVolumeButtonUp;
+    GSEventSend(&ev);
 
-    NSURLSession *session = [NSURLSession sharedSession];
-    NSURLSessionDataTask *task = [session dataTaskWithRequest:req completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-        // 后台回调，不需要处理返回结果
-    }];
-    [task resume];
+    usleep(80000);
+
+    ev.type = kGSEventVolumeButtonUp;
+    ev.info.volumeButton.volumeButtonType = kGSVolumeButtonUp;
+    GSEventSend(&ev);
 }
 
 @interface FloatBall : UIView
@@ -52,10 +45,12 @@ static void runScriptBackground() {
     }
     return self;
 }
+
 - (void)tapAction {
     playTapHaptic();
-    runScriptBackground();
+    simulateVolumeUpKey();
 }
+
 - (void)drag:(UIPanGestureRecognizer *)g {
     CGPoint offset = [g translationInView:self.superview];
     self.center = CGPointMake(self.center.x + offset.x, self.center.y + offset.y);
