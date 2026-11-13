@@ -15,8 +15,11 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Checkout Theos
-        uses: theos/theos@master
+      - name: Clone full Theos (with submodules)
+        run: |
+          git clone --recursive https://github.com/theos/theos.git $GITHUB_WORKSPACE/theos
+        env:
+          THEOS: ${{ github.workspace }}/theos
 
       - name: Checkout sdks
         uses: theos/sdks@master
