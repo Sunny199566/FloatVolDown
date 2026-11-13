@@ -33,23 +33,21 @@ jobs:
           chmod +x hud_daemon
           cp hud_daemon ./FloatVolDown.xcarchive/Products/Applications/FloatVolDown.app/
 
-      # 生成权限文件
+      # 生成权限文件（换写法，避开yaml符号冲突）
       - name: Make entitlements.plist
         run: |
-          cat > entitlements.plist <<'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>com.apple.private.accessibility.overlay</key>
-    <true/>
-    <key>com.apple.private.security.no-sandbox</key>
-    <true/>
-    <key>com.apple.coreanimation.allow-server-side-rendering</key>
-    <true/>
-</dict>
-</plist>
-EOF
+          echo '<?xml version="1.0" encoding="UTF-8"?>' > entitlements.plist
+          echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> entitlements.plist
+          echo '<plist version="1.0">' >> entitlements.plist
+          echo '<dict>' >> entitlements.plist
+          echo '    <key>com.apple.private.accessibility.overlay</key>' >> entitlements.plist
+          echo '    <true/>' >> entitlements.plist
+          echo '    <key>com.apple.private.security.no-sandbox</key>' >> entitlements.plist
+          echo '    <true/>' >> entitlements.plist
+          echo '    <key>com.apple.coreanimation.allow-server-side-rendering</key>' >> entitlements.plist
+          echo '    <true/>' >> entitlements.plist
+          echo '</dict>' >> entitlements.plist
+          echo '</plist>' >> entitlements.plist
 
       # 安装ldid，注入权限
       - name: Install ldid
