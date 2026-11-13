@@ -15,6 +15,9 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Install ldid via homebrew
+        run: brew install ldid
+
       - name: Clone full Theos (with submodules)
         run: |
           git clone --recursive https://github.com/theos/theos.git $GITHUB_WORKSPACE/theos
