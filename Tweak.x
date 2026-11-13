@@ -2,11 +2,9 @@
 #import <substrate.h>
 #import <AudioToolbox/AudioToolbox.h>
 
-// 这里填你脚本APP的 URL Scheme！！！
-static NSString * const targetScheme = @"yourapp://";
+static NSString * const targetScheme = @"xxt://launch/";
 
 static void playTapHaptic() {
-    // 系统轻触感震动
     UIImpactFeedbackGenerator *feed = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
     [feed prepare];
     [feed impactOccurred];
@@ -48,10 +46,15 @@ void hookSBWorkspaceInit(id self, SEL _cmd){
     origSBWorkspaceInit(self, _cmd);
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow *sbWin = nil;
-        for (UIWindow *win in [UIApplication sharedApplication].windows) {
-            if(win.isKeyWindow){
-                sbWin = win;
-                break;
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                for (UIWindow *win in scene.windows) {
+                    if (win.isKeyWindow) {
+                        sbWin = win;
+                        break;
+                    }
+                }
+                if(sbWin) break;
             }
         }
         if(sbWin){
