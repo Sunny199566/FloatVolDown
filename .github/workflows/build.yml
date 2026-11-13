@@ -1,5 +1,4 @@
-name: Build FloatVolDown (TrollStore unsigned IPA)
-
+name: Build FloatVolDown TrollStore IPA
 on:
   push:
     branches: [ main ]
@@ -12,7 +11,8 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Archive
+      # 编译Swift主App
+      - name: Build Main Swift App
         run: |
           xcodebuild archive \
             -project FloatVolDown.xcodeproj \
@@ -23,21 +23,55 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_STYLE=Manual
 
-      - name: Manually package unsigned IPA
+      # clang单独编译 hud_daemon
+      - name: Compile hud_daemon
         run: |
-          # 创建IPA打包目录结构
+          clang -arch arm64 -arch arm64e \
+          -isysroot $(xcrun --sdk iphoneos --show-sdk-path) \
+          -framework UIKit -framework GraphicsServices \
+          hud_daemon.m -o hud_daemon
+          chmod +x hud_daemon
+          cp hud_daemon ./FloatVolDown.xcarchive/Products/Applications/FloatVolDown.app/
+
+      # 生成权限文件
+      - name: Make entitlements.plist
+        run: |
+          cat > entitlements.plist <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.private.accessibility.overlay</key>
+    <true/>
+    <key>com.apple.private.security.no-sandbox</key>
+    <true/>
+    <key>com.apple.coreanimation.allow-server-side-rendering</key>
+    <true/>
+</dict>
+</plist>
+EOF
+
+      # 安装ldid，注入权限
+      - name: Install ldid
+        run: brew install ldid
+
+      - name: Inject entitlements
+        run: |
+          ldid -Sentitlements.plist ./FloatVolDown.xcarchive/Products/Applications/FloatVolDown.app/FloatVolDown
+          ldid -Sentitlements.plist ./FloatVolDown.xcarchive/Products/Applications/FloatVolDown.app/hud_daemon
+
+      # 打包IPA
+      - name: Package IPA
+        run: |
           mkdir -p Payload
-          # 从xcarchive复制app
           cp -r ./FloatVolDown.xcarchive/Products/Applications/FloatVolDown.app ./Payload/
-          # 压缩成ipa，无签名
           zip -q -r FloatVolDown.ipa Payload
-          # 移动到out目录，方便上传
           mkdir -p out
           mv FloatVolDown.ipa out/
 
-      - name: Upload IPA artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: FloatVolDown-Unsigned
+          name: FloatVolDown-GlobalVolDown
           path: out/*.ipa
           retention-days: 7
