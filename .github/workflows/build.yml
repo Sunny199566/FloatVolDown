@@ -9,22 +9,14 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Setup Theos
-        run: |
-          git clone --recursive https://github.com/theos/theos.git $GITHUB_WORKSPACE/theos
-          echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
-          $GITHUB_WORKSPACE/theos/bin/fetch-sdk 16.0
+        uses: theos/setup-theos@v1
+        with:
+          scheme: rootless
 
-      - name: Install dependencies
+      - name: Build package
         run: |
-          brew install make ldid xz
-
-      - name: Build Rootless Deb
-        run: |
-          export THEOS_PACKAGE_SCHEME=rootless
           make clean package FINALPACKAGE=1
 
       - name: Upload deb
