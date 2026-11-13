@@ -1,0 +1,21 @@
+name: Build Troll IPA
+on: [push]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git ~/theos
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+      - name: Build App
+        run: |
+          export THEOS=$HOME/theos
+          make package THEOS_DEVICE_IP=127.0.0.1
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: VolDownFloat-IPA
+          path: packages/*.ipa
