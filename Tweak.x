@@ -1,6 +1,7 @@
 #import <UIKit/UIKit.h>
 #import <substrate.h>
 #import <AudioToolbox/AudioToolbox.h>
+#import <CoreFoundation/CoreFoundation.h>
 
 static UIWindow *floatWindow = nil;
 static NSString *const kNotificationName = @"com.user.floatball.runscript";
@@ -13,7 +14,7 @@ static void playTapHaptic() {
 
 static void sendTriggerNotification(void) {
     CFNotificationCenterPostNotification(
-        CFNotificationCenterGetDistributedCenter(),
+        CFNotificationCenterGetDarwinNotifyCenter(),
         (__bridge CFStringRef)kNotificationName,
         NULL,
         NULL,
