@@ -27,8 +27,8 @@ jobs:
       - name: Install latest SDK via theos
         run: $THEOS/bin/install-sdk latest
 
-      - name: Build (skip signature)
-        run: make clean package FINALPACKAGE=1 NO_CODESIGN=1
+      - name: Build
+        run: make clean package FINALPACKAGE=1
 
       - name: Upload deb
         uses: actions/upload-artifact@v4
