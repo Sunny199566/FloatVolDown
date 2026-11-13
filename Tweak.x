@@ -1,9 +1,9 @@
 #import <UIKit/UIKit.h>
 #import <substrate.h>
 #import <AudioToolbox/AudioToolbox.h>
-#import <dlfcn.h>
 
 static UIWindow *floatWindow = nil;
+static NSString *const kNotificationName = @"com.user.floatball.runscript";
 
 static void playTapHaptic() {
     UIImpactFeedbackGenerator *feed = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
@@ -11,19 +11,14 @@ static void playTapHaptic() {
     [feed impactOccurred];
 }
 
-typedef void (*CGPostVolumeButtonEvent_t)(int btn, int state);
-static void simulateVolumeUpKey(void) {
-    void *handle = dlopen("/System/Library/PrivateFrameworks/CoreGraphics.framework/CoreGraphics", RTLD_LAZY);
-    if (!handle) return;
-    CGPostVolumeButtonEvent_t func = (CGPostVolumeButtonEvent_t)dlsym(handle, "CGPostVolumeButtonEvent");
-    if (!func) {
-        dlclose(handle);
-        return;
-    }
-    func(1, 0);
-    usleep(80000);
-    func(1, 1);
-    dlclose(handle);
+static void sendTriggerNotification(void) {
+    CFNotificationCenterPostNotification(
+        CFNotificationCenterGetDistributedCenter(),
+        (__bridge CFStringRef)kNotificationName,
+        NULL,
+        NULL,
+        YES
+    );
 }
 
 @interface FloatBall : UIView
@@ -44,12 +39,10 @@ static void simulateVolumeUpKey(void) {
     }
     return self;
 }
-
 - (void)tapAction {
     playTapHaptic();
-    simulateVolumeUpKey();
+    sendTriggerNotification();
 }
-
 - (void)drag:(UIPanGestureRecognizer *)g {
     CGPoint offset = [g translationInView:self.superview];
     self.center = CGPointMake(self.center.x + offset.x, self.center.y + offset.y);
