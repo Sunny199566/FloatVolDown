@@ -1,5 +1,4 @@
 #import <UIKit/UIKit.h>
-#import "VolView.h"
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 @property (strong, nonatomic) UIWindow *window;
@@ -7,14 +6,11 @@
 
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    CGRect f = [UIScreen mainScreen].bounds;
-    self.window = [[UIWindow alloc] initWithFrame:f];
-    self.window.rootViewController = [UIViewController new];
+    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    UIViewController *vc = [[UIViewController alloc] init];
+    vc.view.backgroundColor = [UIColor systemBackgroundColor];
+    self.window.rootViewController = vc;
     self.window.hidden = NO;
-    
-    VolView *floatBtn = [[VolView alloc] initWithFrame:CGRectMake(30, 300, 60, 60)];
-    floatBtn.windowLevel = UIWindowLevelAlert + 10;
-    floatBtn.hidden = NO;
     return YES;
 }
 @end
