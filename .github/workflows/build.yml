@@ -1,31 +1,33 @@
-name: Build Troll IPA
-on: [push]
+name: Build Tweak
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Install ldid
-        run: brew install ldid
-      - name: Compile source & link
+        with:
+          submodules: recursive
+
+      - name: Setup Theos
         run: |
-          clang -arch arm64 -arch arm64e \
-          -isysroot $(xcrun --sdk iphoneos --show-sdk-path) \
-          -fobjc-arc \
-          -o VolDownFloat \
-          main.m VolView.m \
-          -framework UIKit -framework CoreGraphics -framework AVFoundation -framework MediaPlayer -ldl
-          
-          mkdir -p Payload/VolDownFloat.app
-          mv VolDownFloat Payload/VolDownFloat.app/
-          cp Info.plist Payload/VolDownFloat.app/
-          
-          ldid -Sentitlements.plist Payload/VolDownFloat.app/VolDownFloat
-          
-          zip -r VolDownFloat.ipa Payload
-      - name: Upload IPA
+          git clone --recursive https://github.com/theos/theos.git $GITHUB_WORKSPACE/theos
+          echo "THEOS=$GITHUB_WORKSPACE/theos" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          brew install make ldid xz
+
+      - name: Build Rootless Deb
+        run: |
+          export THEOS_PACKAGE_SCHEME=rootless
+          make clean package FINALPACKAGE=1
+
+      - name: Upload deb
         uses: actions/upload-artifact@v4
         with:
-          name: VolDownFloat-IPA
-          path: VolDownFloat.ipa
+          name: FloatVolDown-deb
+          path: packages/*.deb
