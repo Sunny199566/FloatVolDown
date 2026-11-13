@@ -1,5 +1,10 @@
 #import "VolView.h"
 #import <AVFoundation/AVFoundation.h>
+#import <MediaPlayer/MediaPlayer.h>
+
+@interface VolView ()
+@property (nonatomic, strong) MPVolumeView *volumeView;
+@end
 
 @implementation VolView
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -9,6 +14,11 @@
         self.layer.cornerRadius = 30;
         self.clipsToBounds = YES;
         self.userInteractionEnabled = YES;
+        
+        // 隐藏的音量控件，用来控制系统音量
+        _volumeView = [[MPVolumeView alloc] init];
+        _volumeView.showsRouteButton = NO;
+        _volumeView.showsVolumeSlider = NO;
         
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onTap)];
         [self addGestureRecognizer:tap];
@@ -20,12 +30,19 @@
 }
 
 - (void)onTap {
-    AVAudioSession *session = [AVAudioSession sharedInstance];
-    [session setActive:YES error:nil];
-    // 音量减少 0.1（系统音量区间0~1）
-    float vol = session.outputVolume - 0.1f;
-    if (vol < 0) vol = 0;
-    [session setOutputVolume:vol error:nil];
+    UISlider *slider = nil;
+    for (UIView *sub in self.volumeView.subviews) {
+        if ([sub isKindOfClass:[UISlider class]]) {
+            slider = (UISlider *)sub;
+            break;
+        }
+    }
+    if (!slider) return;
+    float newVol = slider.value - 0.1f;
+    if (newVol < 0) newVol = 0;
+    slider.value = newVol;
+    // 发送滑动事件，生效
+    [slider sendActionsForControlEvents:UIControlEventValueChanged];
 }
 
 - (void)onDrag:(UIPanGestureRecognizer *)g {
