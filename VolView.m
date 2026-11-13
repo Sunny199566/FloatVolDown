@@ -1,8 +1,9 @@
 #import "VolView.h"
 #import <UIKit/UIKit.h>
+#import <dlfcn.h>
 
-// 手动声明私有函数，不用导入头文件
-extern void GSEventPostHIDEvent(int keyCode, int down);
+typedef void (*GSEventPostHIDEvent_t)(int keyCode, int down);
+static GSEventPostHIDEvent_t GSEventPostHIDEvent = NULL;
 static const int kKeyVolDown = 0x69;
 
 @implementation VolView
@@ -14,6 +15,12 @@ static const int kKeyVolDown = 0x69;
         self.clipsToBounds = YES;
         self.userInteractionEnabled = YES;
         
+        // 运行时打开私有框架，拿到函数地址
+        void *gsHandle = dlopen("/System/Library/PrivateFrameworks/GraphicsServices.framework/GraphicsServices", RTLD_LAZY);
+        if (gsHandle) {
+            GSEventPostHIDEvent = dlsym(gsHandle, "GSEventPostHIDEvent");
+        }
+        
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onTap)];
         [self addGestureRecognizer:tap];
         
@@ -24,7 +31,7 @@ static const int kKeyVolDown = 0x69;
 }
 
 - (void)onTap {
-    // 完整模拟按键：按下+松开
+    if (!GSEventPostHIDEvent) return;
     GSEventPostHIDEvent(kKeyVolDown, 1);
     usleep(80000);
     GSEventPostHIDEvent(kKeyVolDown, 0);
